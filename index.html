@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360 Mate - Your Virtual Tour Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        .logo-tagline {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 1rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        .mode-btn.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+
+        .mode-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .mode-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .mode-desc {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .content-area {
+            display: none;
+        }
+
+        .content-area.active {
+            display: block;
+        }
+
+        .upload-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-section:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            background: rgba(30, 41, 59, 0.7);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .tour-builder {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .scenes-panel {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .scenes-panel h3 {
+            margin-bottom: 1rem;
+            color: #60a5fa;
+        }
+
+        .scene-item {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scene-item:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateX(4px);
+        }
+
+        .scene-item.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .scene-thumbnail {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .scene-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .viewer-container {
+            position: relative;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: #000;
+        }
+
+        #panoramaCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #panoramaCanvas:active {
+            cursor: grabbing;
+        }
+
+        .viewer-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 0.75rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: rgba(59, 130, 246, 0.4);
+        }
+
+        .hotspot {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(59, 130, 246, 0.8);
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .hotspot:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            background: rgba(59, 130, 246, 1);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+            }
+        }
+
+        .hotspot-tooltip {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .hotspot:hover .hotspot-tooltip {
+            opacity: 1;
+        }
+
+        .tools-panel {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 1rem;
+        }
+
+        .tool-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-section h4 {
+            color: #60a5fa;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .tool-btn {
+            padding: 0.75rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tool-btn:hover {
+            background: rgba(51, 65, 85, 0.8);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .tool-btn.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            color: #60a5fa;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #e2e8f0;
+        }
+
+        .share-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .share-option {
+            background: rgba(51, 65, 85, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .share-option-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .share-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .share-input input {
+            flex: 1;
+        }
+
+        .my-tours {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tour-card {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .tour-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .tour-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .tour-card-content {
+            padding: 1.25rem;
+        }
+
+        .tour-card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .tour-card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #94a3b8;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .gyroscope-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.875rem;
+        }
+
+        .gyroscope-indicator.active {
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            font-size: 0.75rem;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 968px) {
+            .tour-builder {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <img src="360_Mate.png" alt="360 Mate" style="height: 45px; width: auto;">
+            </div>
+            <div class="nav-buttons">
+                <button class="btn" onclick="switchView('my-tours')">My Tours</button>
+                <button class="btn" onclick="switchView('explore')">Explore</button>
+                <button class="btn btn-primary" onclick="switchView('create')">Create Tour</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Create Tour Section -->
+        <div id="create-section" class="content-area active">
+            <div class="mode-selector">
+                <div class="mode-btn active" onclick="selectMode('upload')">
+                    <div class="mode-icon">📸</div>
+                    <div class="mode-title">Upload Photos</div>
+                    <div class="mode-desc">Add your 360° images</div>
+                </div>
+                <div class="mode-btn" onclick="selectMode('builder')">
+                    <div class="mode-icon">🏗️</div>
+                    <div class="mode-title">Build Tour</div>
+                    <div class="mode-desc">Connect scenes</div>
+                </div>
+                <div class="mode-btn" onclick="selectMode('preview')">
+                    <div class="mode-icon">🚀</div>
+                    <div class="mode-title">Preview & Share</div>
+                    <div class="mode-desc">Test and publish</div>
+                </div>
+            </div>
+
+            <!-- Upload Mode -->
+            <div id="upload-mode" class="mode-content active">
+                <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <h2>Upload 360° Panoramic Images</h2>
+                    <p style="margin-top: 1rem; color: #94a3b8;">
+                        Drag and drop your panoramic photos here or click to browse
+                    </p>
+                    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #64748b;">
+                        Supports: JPG, PNG • Works with any 360° camera • Powered by 360 Mate
+                    </p>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*" multiple onchange="handleFileUpload(event)">
+                </div>
+
+                <div id="uploadedScenes" style="display: none;">
+                    <h3 style="margin-bottom: 1rem; color: #60a5fa;">Uploaded Scenes</h3>
+                    <div id="scenesList" class="my-tours"></div>
+                </div>
+            </div>
+
+            <!-- Builder Mode -->
+            <div id="builder-mode" class="mode-content">
+                <div class="tour-builder">
+                    <div class="scenes-panel">
+                        <h3>Scenes</h3>
+                        <div id="builderScenesList"></div>
+                    </div>
+
+                    <div>
+                        <div class="viewer-container">
+                            <div class="canvas-wrapper">
+                                <canvas id="panoramaCanvas"></canvas>
+                                <div class="watermark">
+                                    <span style="font-size: 0.875rem; font-weight: 600;">360 Mate</span>
+                                </div>
+                                <div class="gyroscope-indicator" id="gyroIndicator">📱 Gyroscope: Off</div>
+                                <div class="viewer-controls">
+                                    <button class="control-btn" onclick="zoomIn()" title="Zoom In">🔍+</button>
+                                    <button class="control-btn" onclick="zoomOut()" title="Zoom Out">🔍-</button>
+                                    <button class="control-btn" onclick="toggleGyroscope()" title="Toggle Gyroscope">📱</button>
+                                    <button class="control-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+                                    <button class="control-btn" onclick="resetView()" title="Reset View">↻</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tools-panel">
+                            <div class="tool-section">
+                                <h4>Add Hotspots</h4>
+                                <div class="tool-grid">
+                                    <div class="tool-btn" onclick="selectHotspotType('navigation')">
+                                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🚪</div>
+                                        <div style="font-size: 0.75rem;">Navigation</div>
+                                    </div>
+                                    <div class="tool-btn" onclick="selectHotspotType('info')">
+                                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">ℹ️</div>
+                                        <div style="font-size: 0.75rem;">Information</div>
+                                    </div>
+                                    <div class="tool-btn" onclick="selectHotspotType('media')">
+                                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🖼️</div>
+                                        <div style="font-size: 0.75rem;">Media</div>
+                                    </div>
+                                    <div class="tool-btn" onclick="selectHotspotType('link')">
+                                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔗</div>
+                                        <div style="font-size: 0.75rem;">External Link</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h4>Scene Settings</h4>
+                                <div class="input-group">
+                                    <label>Scene Name</label>
+                                    <input type="text" id="sceneName" placeholder="e.g., Living Room">
+                                </div>
+                                <div class="input-group">
+                                    <label>Description</label>
+                                    <textarea id="sceneDesc" placeholder="Describe this scene..."></textarea>
+                                </div>
+                                <button class="btn btn-primary" style="width: 100%;" onclick="saveSceneSettings()">Save Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Mode -->
+            <div id="preview-mode" class="mode-content">
+                <div class="viewer-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="previewCanvas"></canvas>
+                        <div class="watermark">
+                            <span>🧭</span>
+                            <span>360 Mate</span>
+                        </div>
+                        <div class="viewer-controls">
+                            <button class="control-btn" onclick="zoomIn()" title="Zoom In">🔍+</button>
+                            <button class="control-btn" onclick="zoomOut()" title="Zoom Out">🔍-</button>
+                            <button class="control-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+                            <button class="control-btn" onclick="resetView()" title="Reset View">↻</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tools-panel">
+                    <div class="input-group">
+                        <label>Tour Title</label>
+                        <input type="text" id="tourTitle" placeholder="My Virtual Tour">
+                    </div>
+                    <div class="input-group">
+                        <label>Tour Description</label>
+                        <textarea id="tourDescription" placeholder="Describe your virtual tour..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="openShareModal()">
+                        🚀 Share Tour
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Tours Section -->
+        <div id="my-tours-section" class="content-area">
+            <h2 style="margin-bottom: 1.5rem; color: #60a5fa;">My Virtual Tours</h2>
+            <div id="myToursList" class="my-tours">
+                <div class="empty-state">
+                    <div style="margin-bottom: 1.5rem;">
+                        <img src="360_Mate.png" alt="360 Mate" style="height: 80px; width: auto; opacity: 0.3;">
+                    </div>
+                    <h3>No tours yet</h3>
+                    <p>Start creating immersive 360° experiences with 360 Mate</p>
+                    <button class="btn btn-primary" style="margin-top: 1rem;" onclick="switchView('create')">Create Your First Tour</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explore Section -->
+        <div id="explore-section" class="content-area">
+            <h2 style="margin-bottom: 0.5rem; color: #60a5fa;">Explore Virtual Tours</h2>
+            <p style="margin-bottom: 2rem; color: #94a3b8;">Discover amazing 360° experiences created with 360 Mate</p>
+            <div class="my-tours">
+                <div class="tour-card">
+                    <div class="tour-card-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <div class="tour-card-content">
+                        <div class="tour-card-title">Modern Office Space</div>
+                        <div class="tour-card-meta">
+                            <span>12 scenes</span>
+                            <span>2.3k views</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="tour-card">
+                    <div class="tour-card-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                    <div class="tour-card-content">
+                        <div class="tour-card-title">Luxury Real Estate</div>
+                        <div class="tour-card-meta">
+                            <span>8 scenes</span>
+                            <span>1.8k views</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="tour-card">
+                    <div class="tour-card-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                    <div class="tour-card-content">
+                        <div class="tour-card-title">Art Gallery Exhibition</div>
+                        <div class="tour-card-meta">
+                            <span>15 scenes</span>
+                            <span>3.1k views</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Share Your Tour</h3>
+                <button class="close-btn" onclick="closeShareModal()">×</button>
+            </div>
+            <div class="share-options">
+                <div class="share-option">
+                    <div class="share-option-title">🔗 Share Link</div>
+                    <div class="share-input">
+                        <input type="text" id="shareLink" value="https://360mate.app/tour/demo" readonly>
+                        <button class="btn" onclick="copyShareLink()">Copy</button>
+                    </div>
+                    <small style="display: block; margin-top: 0.5rem; color: #64748b; font-size: 0.75rem;">
+                        Share your 360 Mate tour with anyone
+                    </small>
+                </div>
+                <div class="share-option">
+                    <div class="share-option-title">📝 Embed Code</div>
+                    <div class="share-input">
+                        <input type="text" id="embedCode" value='<iframe src="https://360mate.app/embed/demo"></iframe>' readonly>
+                        <button class="btn" onclick="copyEmbedCode()">Copy</button>
+                    </div>
+                    <small style="display: block; margin-top: 0.5rem; color: #64748b; font-size: 0.75rem;">
+                        Embed your tour on any website
+                    </small>
+                </div>
+                <div class="share-option">
+                    <div class="share-option-title">🌐 Social Media</div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button class="btn" style="flex: 1;">Facebook</button>
+                        <button class="btn" style="flex: 1;">Twitter</button>
+                        <button class="btn" style="flex: 1;">LinkedIn</button>
+                    </div>
+                </div>
+                <div class="share-option">
+                    <div class="share-option-title">⚙️ Privacy</div>
+                    <select style="width: 100%; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #e2e8f0;">
+                        <option>Public - Anyone can view</option>
+                        <option>Unlisted - Only people with link</option>
+                        <option>Private - Only you can view</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotspot Configuration Modal -->
+    <div id="hotspotConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="hotspotConfigTitle">Configure Hotspot</h3>
+                <button class="close-btn" onclick="document.getElementById('hotspotConfigModal').classList.remove('active')">×</button>
+            </div>
+            
+            <!-- Navigation Config -->
+            <div id="navConfig" style="display: none;">
+                <div class="input-group">
+                    <label>Destination Scene</label>
+                    <select id="targetSceneSelect" style="width: 100%; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #e2e8f0;">
+                        <option value="">Select destination scene...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Info Config -->
+            <div id="infoConfig" style="display: none;">
+                <div class="input-group">
+                    <label>Title</label>
+                    <input type="text" id="hotspotInfoTitle" placeholder="e.g., Master Bedroom">
+                </div>
+                <div class="input-group">
+                    <label>Information Text</label>
+                    <textarea id="hotspotInfoText" placeholder="Describe what's interesting about this..." style="min-height: 120px;"></textarea>
+                </div>
+            </div>
+            
+            <!-- Link Config -->
+            <div id="linkConfig" style="display: none;">
+                <div class="input-group">
+                    <label>Title</label>
+                    <input type="text" id="hotspotLinkTitle" placeholder="e.g., Watch Property Tour, View Floor Plan">
+                </div>
+                <div class="input-group">
+                    <label>Media URL</label>
+                    <input type="url" id="hotspotLinkUrl" placeholder="YouTube, Vimeo, image, or PDF URL">
+                    <small style="display: block; margin-top: 0.5rem; color: #64748b; font-size: 0.75rem;">
+                        ✨ 360 Mate auto-embeds: YouTube, Vimeo videos • Images (jpg, png, gif) • PDFs<br>
+                        📺 Displays beautifully in an overlay card without leaving your tour
+                    </small>
+                </div>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">
+                        <strong style="color: #60a5fa;">Examples:</strong><br>
+                        • youtube.com/watch?v=dQw4w9WgXcQ<br>
+                        • vimeo.com/123456789<br>
+                        • example.com/image.jpg<br>
+                        • example.com/floorplan.pdf
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" style="flex: 1;" onclick="saveHotspotConfig()">Save</button>
+                <button class="btn btn-danger" onclick="deleteCurrentHotspot()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Display Modal -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="infoModalTitle">Information</h3>
+                <button class="close-btn" onclick="document.getElementById('infoModal').classList.remove('active')">×</button>
+            </div>
+            <p id="infoModalText" style="color: #cbd5e1; line-height: 1.6;"></p>
+        </div>
+    </div>
+
+    <!-- Media Display Modal -->
+    <div id="mediaModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 id="mediaModalTitle">Media</h3>
+                <button class="close-btn" onclick="document.getElementById('mediaModal').classList.remove('active')">×</button>
+            </div>
+            <div id="mediaContainer" style="background: #000; border-radius: 8px; min-height: 200px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentMode = 'upload';
+        let currentView = 'create';
+        let scenes = [];
+        let currentSceneIndex = 0;
+        let hotspots = [];
+        let selectedHotspotType = null;
+        let hoveredHotspot = null;
+        
+        // Canvas and rendering
+        let canvas, ctx;
+        let isDragging = false;
+        let lastX = 0, lastY = 0;
+        let yaw = 0, pitch = 0;
+        let fov = 90;
+        let currentImage = null;
+        let gyroscopeEnabled = false;
+        let gyroscopePermission = false;
+
+        function init() {
+            canvas = document.getElementById('panoramaCanvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupCanvasEvents();
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            render();
+        }
+
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', startDrag);
+            canvas.addEventListener('mousemove', drag);
+            canvas.addEventListener('mouseup', endDrag);
+            canvas.addEventListener('mouseleave', endDrag);
+            canvas.addEventListener('wheel', handleZoom);
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('mousemove', handleHover);
+        }
+
+        function handleHover(e) {
+            if (isDragging) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            let foundHotspot = null;
+            
+            // Check if hovering over any hotspot
+            if (scenes[currentSceneIndex] && scenes[currentSceneIndex].hotspots) {
+                for (let hotspot of scenes[currentSceneIndex].hotspots) {
+                    if (hotspot.screenX !== null && hotspot.screenY !== null) {
+                        const dx = mouseX - hotspot.screenX;
+                        const dy = mouseY - hotspot.screenY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 35) {
+                            foundHotspot = hotspot;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Update hovered hotspot
+            if (foundHotspot !== hoveredHotspot) {
+                hoveredHotspot = foundHotspot;
+                canvas.style.cursor = foundHotspot ? 'pointer' : (selectedHotspotType ? 'crosshair' : 'grab');
+            }
+        }
+
+        function startDrag(e) {
+            isDragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
+            
+            yaw -= deltaX * 0.3;  // Reversed direction
+            pitch -= deltaY * 0.3;  // Reversed direction
+            pitch = Math.max(-90, Math.min(90, pitch));
+            
+            lastX = e.clientX;
+            lastY = e.clientY;
+            
+            render();
+        }
+
+        function endDrag() {
+            isDragging = false;
+        }
+
+        function handleZoom(e) {
+            e.preventDefault();
+            fov += e.deltaY * 0.05;
+            fov = Math.max(30, Math.min(120, fov));
+            render();
+        }
+
+        function zoomIn() {
+            fov = Math.max(30, fov - 10);
+            render();
+        }
+
+        function zoomOut() {
+            fov = Math.min(120, fov + 10);
+            render();
+        }
+
+        function resetView() {
+            yaw = 0;
+            pitch = 0;
+            fov = 90;
+            render();
+        }
+
+        function render() {
+            if (!currentImage) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Upload a 360° image to begin', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            const aspectRatio = canvas.width / canvas.height;
+            
+            ctx.save();
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const sourceX = ((yaw + 180) / 360) * currentImage.width - (currentImage.width / fov) * aspectRatio;
+            const sourceY = ((pitch + 90) / 180) * currentImage.height - (currentImage.height / fov);
+            const sourceWidth = (currentImage.width / fov) * aspectRatio * 2;
+            const sourceHeight = (currentImage.height / fov) * 2;
+            
+            try {
+                ctx.drawImage(
+                    currentImage,
+                    Math.max(0, sourceX),
+                    Math.max(0, sourceY),
+                    Math.min(currentImage.width, sourceWidth),
+                    Math.min(currentImage.height, sourceHeight),
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+            } catch (e) {
+                ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+            }
+            
+            ctx.restore();
+            
+            // Draw hotspots
+            if (scenes[currentSceneIndex] && scenes[currentSceneIndex].hotspots) {
+                scenes[currentSceneIndex].hotspots.forEach(hotspot => {
+                    drawHotspot(hotspot);
+                });
+            }
+        }
+
+        function drawHotspot(hotspot) {
+            // Convert spherical coordinates to screen position
+            const aspectRatio = canvas.width / canvas.height;
+            
+            // Calculate relative position from current view
+            let relativeYaw = hotspot.yaw - yaw;
+            let relativePitch = hotspot.pitch - pitch;
+            
+            // Normalize yaw to -180 to 180 range
+            while (relativeYaw > 180) relativeYaw -= 360;
+            while (relativeYaw < -180) relativeYaw += 360;
+            
+            // Check if hotspot is in current field of view
+            const halfFovH = (fov * aspectRatio) / 2;
+            const halfFovV = fov / 2;
+            
+            if (Math.abs(relativeYaw) > halfFovH || Math.abs(relativePitch) > halfFovV) {
+                // Hotspot is outside current view
+                hotspot.screenX = null;
+                hotspot.screenY = null;
+                return;
+            }
+            
+            // Convert to screen coordinates
+            const x = canvas.width * (0.5 + relativeYaw / (fov * aspectRatio));
+            const y = canvas.height * (0.5 + relativePitch / fov);
+            
+            // Store screen position for click detection
+            hotspot.screenX = x;
+            hotspot.screenY = y;
+            
+            const radius = 25;
+            
+            // Pulsing animation
+            const pulseSize = Math.sin(Date.now() / 500) * 3;
+            
+            // Outer glow
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, radius + pulseSize + 5, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+            ctx.fill();
+            
+            // Main circle
+            ctx.beginPath();
+            ctx.arc(x, y, radius + pulseSize, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Icon
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const icon = hotspot.type === 'navigation' ? '🚪' : 
+                         hotspot.type === 'info' ? 'ℹ️' : 
+                         hotspot.type === 'media' ? '🖼️' : '🔗';
+            ctx.fillText(icon, x, y);
+            
+            // Draw tooltip if hovering
+            if (hoveredHotspot === hotspot) {
+                drawTooltip(hotspot, x, y);
+            }
+            
+            ctx.restore();
+        }
+
+        function drawTooltip(hotspot, x, y) {
+            let text = '';
+            
+            if (hotspot.type === 'navigation' && hotspot.targetScene !== null) {
+                text = `Go to ${scenes[hotspot.targetScene].name}`;
+            } else if (hotspot.type === 'info' && hotspot.infoTitle) {
+                text = hotspot.infoTitle;
+            } else if (hotspot.type === 'link' && hotspot.linkTitle) {
+                text = hotspot.linkTitle;
+            } else {
+                text = hotspot.label || hotspot.type;
+            }
+            
+            // Measure text
+            ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            const metrics = ctx.measureText(text);
+            const padding = 12;
+            const tooltipWidth = metrics.width + padding * 2;
+            const tooltipHeight = 32;
+            
+            // Position tooltip above hotspot
+            let tooltipX = x - tooltipWidth / 2;
+            let tooltipY = y - 50;
+            
+            // Keep tooltip on screen
+            if (tooltipX < 10) tooltipX = 10;
+            if (tooltipX + tooltipWidth > canvas.width - 10) tooltipX = canvas.width - tooltipWidth - 10;
+            if (tooltipY < 10) tooltipY = y + 40;
+            
+            // Draw tooltip background
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            
+            // Rounded rectangle
+            const radius = 6;
+            ctx.beginPath();
+            ctx.moveTo(tooltipX + radius, tooltipY);
+            ctx.lineTo(tooltipX + tooltipWidth - radius, tooltipY);
+            ctx.quadraticCurveTo(tooltipX + tooltipWidth, tooltipY, tooltipX + tooltipWidth, tooltipY + radius);
+            ctx.lineTo(tooltipX + tooltipWidth, tooltipY + tooltipHeight - radius);
+            ctx.quadraticCurveTo(tooltipX + tooltipWidth, tooltipY + tooltipHeight, tooltipX + tooltipWidth - radius, tooltipY + tooltipHeight);
+            ctx.lineTo(tooltipX + radius, tooltipY + tooltipHeight);
+            ctx.quadraticCurveTo(tooltipX, tooltipY + tooltipHeight, tooltipX, tooltipY + tooltipHeight - radius);
+            ctx.lineTo(tooltipX, tooltipY + radius);
+            ctx.quadraticCurveTo(tooltipX, tooltipY, tooltipX + radius, tooltipY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw text
+            ctx.fillStyle = '#e2e8f0';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2);
+            
+            // Draw arrow pointing to hotspot
+            if (tooltipY < y) {
+                // Arrow pointing down
+                ctx.beginPath();
+                ctx.moveTo(x, y - 35);
+                ctx.lineTo(x - 6, y - 43);
+                ctx.lineTo(x + 6, y - 43);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+                ctx.fill();
+            }
+        }
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const scene = {
+                            id: Date.now() + index,
+                            name: file.name.replace(/\.[^/.]+$/, ""),
+                            image: img,
+                            src: e.target.result,
+                            hotspots: []
+                        };
+                        scenes.push(scene);
+                        
+                        if (scenes.length === 1) {
+                            loadScene(0);
+                        }
+                        
+                        updateScenesDisplay();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadScene(index) {
+            if (index >= 0 && index < scenes.length) {
+                currentSceneIndex = index;
+                currentImage = scenes[index].image;
+                document.getElementById('sceneName').value = scenes[index].name;
+                document.getElementById('sceneDesc').value = scenes[index].description || '';
+                render();
+                updateActiveScene();
+            }
+        }
+
+        function updateScenesDisplay() {
+            document.getElementById('uploadedScenes').style.display = scenes.length > 0 ? 'block' : 'none';
+            
+            const scenesList = document.getElementById('scenesList');
+            const builderScenesList = document.getElementById('builderScenesList');
+            
+            scenesList.innerHTML = '';
+            builderScenesList.innerHTML = '';
+            
+            scenes.forEach((scene, index) => {
+                const card = document.createElement('div');
+                card.className = 'tour-card';
+                card.innerHTML = `
+                    <img src="${scene.src}" class="tour-card-image" alt="${scene.name}">
+                    <div class="tour-card-content">
+                        <div class="tour-card-title">${scene.name}</div>
+                        <div class="tour-card-meta">
+                            <span>${scene.hotspots?.length || 0} hotspots</span>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => {
+                    loadScene(index);
+                    selectMode('builder');
+                };
+                scenesList.appendChild(card);
+                
+                const item = document.createElement('div');
+                item.className = 'scene-item';
+                if (index === currentSceneIndex) item.classList.add('active');
+                item.innerHTML = `
+                    <img src="${scene.src}" class="scene-thumbnail" alt="${scene.name}">
+                    <div class="scene-name">${scene.name}</div>
+                `;
+                item.onclick = () => loadScene(index);
+                builderScenesList.appendChild(item);
+            });
+        }
+
+        function updateActiveScene() {
+            document.querySelectorAll('.scene-item').forEach((item, index) => {
+                item.classList.toggle('active', index === currentSceneIndex);
+            });
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(`${mode}-mode`).classList.add('active');
+            
+            if (mode === 'builder' && scenes.length > 0) {
+                setTimeout(() => {
+                    canvas = document.getElementById('panoramaCanvas');
+                    ctx = canvas.getContext('2d');
+                    resizeCanvas();
+                    setupCanvasEvents();
+                    render();
+                }, 100);
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('.content-area').forEach(area => area.classList.remove('active'));
+            document.getElementById(`${view}-section`).classList.add('active');
+        }
+
+        function selectHotspotType(type) {
+            selectedHotspotType = type;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            canvas.style.cursor = 'crosshair';
+        }
+
+        function handleCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Check if clicking on existing hotspot
+            if (scenes[currentSceneIndex] && scenes[currentSceneIndex].hotspots) {
+                for (let i = 0; i < scenes[currentSceneIndex].hotspots.length; i++) {
+                    const hotspot = scenes[currentSceneIndex].hotspots[i];
+                    if (hotspot.screenX && hotspot.screenY) {
+                        const dx = clickX - hotspot.screenX;
+                        const dy = clickY - hotspot.screenY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < 35) {
+                            handleHotspotClick(hotspot, i);
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // If placing new hotspot
+            if (!selectedHotspotType) return;
+            
+            // Convert screen position to spherical coordinates
+            const normalizedX = clickX / canvas.width;
+            const normalizedY = clickY / canvas.height;
+            
+            // Calculate the yaw and pitch at click position relative to current view
+            const clickYaw = yaw + (normalizedX - 0.5) * fov * (canvas.width / canvas.height);
+            const clickPitch = pitch + (normalizedY - 0.5) * fov;
+            
+            const hotspot = {
+                type: selectedHotspotType,
+                yaw: clickYaw,
+                pitch: clickPitch,
+                label: `${selectedHotspotType} hotspot`,
+                targetScene: null,
+                infoText: '',
+                infoTitle: '',
+                linkUrl: '',
+                linkTitle: ''
+            };
+            
+            if (!scenes[currentSceneIndex].hotspots) {
+                scenes[currentSceneIndex].hotspots = [];
+            }
+            scenes[currentSceneIndex].hotspots.push(hotspot);
+            
+            // Open config modal
+            openHotspotConfig(scenes[currentSceneIndex].hotspots.length - 1);
+            
+            selectedHotspotType = null;
+            canvas.style.cursor = 'grab';
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            
+            updateScenesDisplay();
+            render();
+        }
+
+        function handleHotspotClick(hotspot, index) {
+            if (hotspot.type === 'navigation' && hotspot.targetScene !== null) {
+                loadScene(hotspot.targetScene);
+            } else if (hotspot.type === 'info') {
+                // Show full information in modal
+                if (hotspot.infoText && hotspot.infoText.trim()) {
+                    showInfoModal(hotspot);
+                } else {
+                    // If no info configured, allow editing
+                    if (confirm('This information hotspot has no content. Configure it now?')) {
+                        openHotspotConfig(index);
+                    }
+                }
+            } else if (hotspot.type === 'link') {
+                // Show media card overlay
+                if (hotspot.linkUrl && hotspot.linkUrl.trim()) {
+                    showMediaCard(hotspot);
+                } else {
+                    // If no link configured, allow editing
+                    if (confirm('This link hotspot has no URL. Configure it now?')) {
+                        openHotspotConfig(index);
+                    }
+                }
+            } else if (hotspot.type === 'media') {
+                // Show media card for media hotspots too
+                if (hotspot.linkUrl && hotspot.linkUrl.trim()) {
+                    showMediaCard(hotspot);
+                } else {
+                    if (confirm('This media hotspot has no content. Configure it now?')) {
+                        openHotspotConfig(index);
+                    }
+                }
+            }
+        }
+
+        function showMediaCard(hotspot) {
+            const modal = document.getElementById('mediaModal');
+            const title = document.getElementById('mediaModalTitle');
+            const container = document.getElementById('mediaContainer');
+            
+            title.textContent = hotspot.linkTitle || 'Media';
+            
+            let url = hotspot.linkUrl.trim();
+            let embedHtml = '';
+            
+            // Detect and embed different media types
+            if (isYouTubeUrl(url)) {
+                const videoId = extractYouTubeId(url);
+                embedHtml = `<iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+            } else if (isVimeoUrl(url)) {
+                const videoId = extractVimeoId(url);
+                embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}" width="100%" height="400" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+            } else if (isImageUrl(url)) {
+                if (!url.match(/^https?:\/\//i)) url = 'https://' + url;
+                embedHtml = `<img src="${url}" style="width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;" alt="${hotspot.linkTitle || 'Image'}">`;
+            } else if (isPdfUrl(url)) {
+                if (!url.match(/^https?:\/\//i)) url = 'https://' + url;
+                embedHtml = `<iframe src="${url}" width="100%" height="500" frameborder="0" style="border-radius: 8px;"></iframe>`;
+            } else {
+                // Generic iframe or link
+                if (!url.match(/^https?:\/\//i)) url = 'https://' + url;
+                embedHtml = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color: #94a3b8; margin-bottom: 0.5rem;">360 Mate couldn't auto-embed this link</p>
+                        <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem;">It will open in a new tab</p>
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Open Link</a>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = embedHtml;
+            modal.classList.add('active');
+        }
+
+        function isYouTubeUrl(url) {
+            return url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+        }
+
+        function extractYouTubeId(url) {
+            const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+            return match ? match[1] : '';
+        }
+
+        function isVimeoUrl(url) {
+            return url.match(/vimeo\.com\/(\d+)/i);
+        }
+
+        function extractVimeoId(url) {
+            const match = url.match(/vimeo\.com\/(\d+)/i);
+            return match ? match[1] : '';
+        }
+
+        function isImageUrl(url) {
+            return url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
+        }
+
+        function isPdfUrl(url) {
+            return url.match(/\.pdf$/i);
+        }
+
+        function showInfoModal(hotspot) {
+            const modal = document.getElementById('infoModal');
+            document.getElementById('infoModalTitle').textContent = hotspot.infoTitle || 'Information';
+            document.getElementById('infoModalText').textContent = hotspot.infoText || 'No information provided';
+            modal.classList.add('active');
+        }
+
+        function saveSceneSettings() {
+            scenes[currentSceneIndex].name = document.getElementById('sceneName').value;
+            scenes[currentSceneIndex].description = document.getElementById('sceneDesc').value;
+            updateScenesDisplay();
+            
+            const btn = event.currentTarget;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Saved!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+
+        function toggleFullscreen() {
+            const wrapper = canvas.parentElement;
+            if (!document.fullscreenElement) {
+                wrapper.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        async function toggleGyroscope() {
+            if (!gyroscopePermission) {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission === 'granted') {
+                            gyroscopePermission = true;
+                        } else {
+                            alert('Gyroscope permission denied');
+                            return;
+                        }
+                    } catch (error) {
+                        alert('Gyroscope not supported');
+                        return;
+                    }
+                } else {
+                    gyroscopePermission = true;
+                }
+            }
+            
+            gyroscopeEnabled = !gyroscopeEnabled;
+            const indicator = document.getElementById('gyroIndicator');
+            
+            if (gyroscopeEnabled) {
+                indicator.textContent = '📱 Gyroscope: On';
+                indicator.classList.add('active');
+                window.addEventListener('deviceorientation', handleOrientation);
+            } else {
+                indicator.textContent = '📱 Gyroscope: Off';
+                indicator.classList.remove('active');
+                window.removeEventListener('deviceorientation', handleOrientation);
+            }
+        }
+
+        function handleOrientation(event) {
+            if (gyroscopeEnabled && event.alpha !== null) {
+                yaw = event.alpha;
+                pitch = event.beta - 90;
+                render();
+            }
+        }
+
+        function openShareModal() {
+            document.getElementById('shareModal').classList.add('active');
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.remove('active');
+        }
+
+        function copyShareLink() {
+            const input = document.getElementById('shareLink');
+            input.select();
+            document.execCommand('copy');
+            
+            const btn = event.currentTarget;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+
+        function copyEmbedCode() {
+            const input = document.getElementById('embedCode');
+            input.select();
+            document.execCommand('copy');
+            
+            const btn = event.currentTarget;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+
+        function openHotspotConfig(index) {
+            currentHotspotIndex = index;
+            const hotspot = scenes[currentSceneIndex].hotspots[index];
+            
+            document.getElementById('hotspotConfigTitle').textContent = 
+                hotspot.type === 'navigation' ? 'Configure Navigation' :
+                hotspot.type === 'info' ? 'Configure Information' :
+                hotspot.type === 'media' ? 'Configure Media' : 'Configure Link';
+            
+            // Hide all config sections first
+            document.getElementById('navConfig').style.display = 'none';
+            document.getElementById('infoConfig').style.display = 'none';
+            document.getElementById('linkConfig').style.display = 'none';
+            
+            if (hotspot.type === 'navigation') {
+                document.getElementById('navConfig').style.display = 'block';
+                populateSceneSelector(hotspot.targetScene);
+            } else if (hotspot.type === 'info') {
+                document.getElementById('infoConfig').style.display = 'block';
+                document.getElementById('hotspotInfoTitle').value = hotspot.infoTitle || '';
+                document.getElementById('hotspotInfoText').value = hotspot.infoText || '';
+            } else if (hotspot.type === 'link' || hotspot.type === 'media') {
+                document.getElementById('linkConfig').style.display = 'block';
+                document.getElementById('hotspotLinkTitle').value = hotspot.linkTitle || '';
+                document.getElementById('hotspotLinkUrl').value = hotspot.linkUrl || '';
+            }
+            
+            document.getElementById('hotspotConfigModal').classList.add('active');
+        }
+
+        function populateSceneSelector(selectedIndex) {
+            const select = document.getElementById('targetSceneSelect');
+            select.innerHTML = '<option value="">Select destination scene...</option>';
+            scenes.forEach((scene, index) => {
+                if (index !== currentSceneIndex) {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = scene.name;
+                    if (index === selectedIndex) option.selected = true;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        function saveHotspotConfig() {
+            const hotspot = scenes[currentSceneIndex].hotspots[currentHotspotIndex];
+            
+            if (hotspot.type === 'navigation') {
+                const targetScene = document.getElementById('targetSceneSelect').value;
+                hotspot.targetScene = targetScene !== '' ? parseInt(targetScene) : null;
+                hotspot.label = targetScene !== '' ? `Go to ${scenes[targetScene].name}` : 'Navigation';
+            } else if (hotspot.type === 'info') {
+                hotspot.infoTitle = document.getElementById('hotspotInfoTitle').value;
+                hotspot.infoText = document.getElementById('hotspotInfoText').value;
+                hotspot.label = hotspot.infoTitle || 'Information';
+            } else if (hotspot.type === 'link' || hotspot.type === 'media') {
+                hotspot.linkTitle = document.getElementById('hotspotLinkTitle').value;
+                hotspot.linkUrl = document.getElementById('hotspotLinkUrl').value;
+                hotspot.label = hotspot.linkTitle || 'Media Link';
+            }
+            
+            document.getElementById('hotspotConfigModal').classList.remove('active');
+            render();
+        }
+
+        function deleteCurrentHotspot() {
+            if (confirm('Delete this hotspot?')) {
+                scenes[currentSceneIndex].hotspots.splice(currentHotspotIndex, 1);
+                document.getElementById('hotspotConfigModal').classList.remove('active');
+                updateScenesDisplay();
+                render();
+            }
+        }
+
+        // Animation loop for pulsing hotspots
+        function animate() {
+            render();
+            requestAnimationFrame(animate);
+        }
+
+        let currentHotspotIndex = null;
+
+        window.addEventListener('load', () => {
+            init();
+            animate();
+        });
+    </script>
+</body>
+</html>
