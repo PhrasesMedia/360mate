@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>360 Mate - Your Virtual Tour Companion</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
     <style>
         * {
             margin: 0;
@@ -648,7 +649,7 @@
                     <div>
                         <div class="viewer-container">
                             <div class="canvas-wrapper">
-                                <canvas id="panoramaCanvas"></canvas>
+                                <div id="panoramaCanvas" style="width: 100%; height: 100%; position: relative;"></div>
                                 <div class="gyroscope-indicator" id="gyroIndicator">📱 Gyroscope: Off</div>
                                 <div class="viewer-controls">
                                     <button class="control-btn" onclick="zoomIn()" title="Zoom In">🔍+</button>
@@ -918,6 +919,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // State management
         let currentMode = 'upload';
@@ -928,31 +930,85 @@
         let selectedHotspotType = null;
         let hoveredHotspot = null;
         
-        // Canvas and rendering
-        let canvas, ctx;
+        // Three.js rendering
+        let scene, camera, renderer, sphere, texture;
         let isDragging = false;
         let lastX = 0, lastY = 0;
-        let yaw = 0, pitch = 0;
-        let fov = 90;
+        let lon = 0, lat = 0;  // Longitude and latitude for camera rotation
+        let phi = 0, theta = 0;
         let currentImage = null;
         let gyroscopeEnabled = false;
         let gyroscopePermission = false;
+        let container;
 
         function init() {
-            canvas = document.getElementById('panoramaCanvas');
-            ctx = canvas.getContext('2d');
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
+            container = document.getElementById('panoramaCanvas');
+            
+            // Create three.js scene
+            scene = new THREE.Scene();
+            
+            // Create camera with 75° FOV
+            camera = new THREE.PerspectiveCamera(
+                75,
+                container.offsetWidth / container.offsetHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 0, 0.1);
+            
+            // Create WebGL renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            container.appendChild(renderer.domElement);
+            
+            // Create sphere geometry (inside-out so we see the inside)
+            const geometry = new THREE.SphereGeometry(500, 60, 40);
+            geometry.scale(-1, 1, 1); // Flip inside out
+            
+            // Create material (will add texture when image loads)
+            const material = new THREE.MeshBasicMaterial();
+            sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+            
+            // Create overlay canvas for hotspots and watermark
+            createOverlay();
+            
+            window.addEventListener('resize', onWindowResize);
             setupCanvasEvents();
+            animate();
         }
 
-        function resizeCanvas() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            render();
+        function onWindowResize() {
+            camera.aspect = container.offsetWidth / container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            resizeOverlay();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+            updateOverlay();
+        }
+
+        function update() {
+            // Update camera rotation based on lon/lat
+            lat = Math.max(-85, Math.min(85, lat));
+            phi = THREE.MathUtils.degToRad(90 - lat);
+            theta = THREE.MathUtils.degToRad(lon);
+            
+            camera.target = new THREE.Vector3(
+                500 * Math.sin(phi) * Math.cos(theta),
+                500 * Math.cos(phi),
+                500 * Math.sin(phi) * Math.sin(theta)
+            );
+            
+            camera.lookAt(camera.target);
         }
 
         function setupCanvasEvents() {
+            const canvas = renderer.domElement;
             canvas.addEventListener('mousedown', startDrag);
             canvas.addEventListener('mousemove', drag);
             canvas.addEventListener('mouseup', endDrag);
@@ -965,6 +1021,7 @@
         function handleHover(e) {
             if (isDragging) return;
             
+            const canvas = renderer.domElement;
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -1006,14 +1063,11 @@
             const deltaX = e.clientX - lastX;
             const deltaY = e.clientY - lastY;
             
-            yaw -= deltaX * 0.15;  // Reduced sensitivity for smoother dragging
-            pitch -= deltaY * 0.15;  // Reduced sensitivity for smoother dragging
-            pitch = Math.max(-90, Math.min(90, pitch));
+            lon -= deltaX * 0.15;  // Reversed: drag right to look right
+            lat += deltaY * 0.15;  // Reversed: drag down to look down
             
             lastX = e.clientX;
             lastY = e.clientY;
-            
-            render();
         }
 
         function endDrag() {
@@ -1022,67 +1076,48 @@
 
         function handleZoom(e) {
             e.preventDefault();
-            fov += e.deltaY * 0.05;
-            fov = Math.max(30, Math.min(120, fov));
-            render();
+            const fov = camera.fov + e.deltaY * 0.05;
+            camera.fov = THREE.MathUtils.clamp(fov, 40, 100);
+            camera.updateProjectionMatrix();
         }
 
         function zoomIn() {
-            fov = Math.max(30, fov - 10);
-            render();
+            camera.fov = THREE.MathUtils.clamp(camera.fov - 5, 40, 100);
+            camera.updateProjectionMatrix();
         }
 
         function zoomOut() {
-            fov = Math.min(120, fov + 10);
-            render();
+            camera.fov = THREE.MathUtils.clamp(camera.fov + 5, 40, 100);
+            camera.updateProjectionMatrix();
         }
 
         function resetView() {
-            yaw = 0;
-            pitch = 0;
-            fov = 90;
-            render();
+            lon = 0;
+            lat = 0;
+            camera.fov = 75;
+            camera.updateProjectionMatrix();
         }
 
-        function render() {
-            if (!currentImage) {
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '16px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Upload a 360° image to begin', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            const aspectRatio = canvas.width / canvas.height;
+        // Overlay canvas for hotspots and watermark (drawn on top of three.js)
+        let overlayCanvas, overlayCtx;
+        
+        function createOverlay() {
+            overlayCanvas = document.createElement('canvas');
+            overlayCanvas.style.position = 'absolute';
+            overlayCanvas.style.top = '0';
+            overlayCanvas.style.left = '0';
+            overlayCanvas.style.pointerEvents = 'none';
+            overlayCanvas.width = container.offsetWidth;
+            overlayCanvas.height = container.offsetHeight;
+            container.appendChild(overlayCanvas);
+            overlayCtx = overlayCanvas.getContext('2d');
+        }
+        
+        function updateOverlay() {
+            if (!overlayCanvas) return;
             
-            ctx.save();
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const sourceX = ((yaw + 180) / 360) * currentImage.width - (currentImage.width / fov) * aspectRatio;
-            const sourceY = ((pitch + 90) / 180) * currentImage.height - (currentImage.height / fov);
-            const sourceWidth = (currentImage.width / fov) * aspectRatio * 2;
-            const sourceHeight = (currentImage.height / fov) * 2;
-            
-            try {
-                ctx.drawImage(
-                    currentImage,
-                    Math.max(0, sourceX),
-                    Math.max(0, sourceY),
-                    Math.min(currentImage.width, sourceWidth),
-                    Math.min(currentImage.height, sourceHeight),
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height
-                );
-            } catch (e) {
-                ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
-            }
-            
-            ctx.restore();
+            // Clear overlay
+            overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
             
             // Draw hotspots
             if (scenes[currentSceneIndex] && scenes[currentSceneIndex].hotspots) {
@@ -1091,56 +1126,65 @@
                 });
             }
             
-            // Draw watermark logo
+            // Draw watermark
             drawWatermark();
+        }
+        
+        function resizeOverlay() {
+            if (overlayCanvas) {
+                overlayCanvas.width = container.offsetWidth;
+                overlayCanvas.height = container.offsetHeight;
+                updateOverlay();
+            }
         }
 
         function drawWatermark() {
+            if (!overlayCtx) return;
+            
             const logoWidth = 140;
             const logoHeight = 30;
             const padding = 15;
-            const x = canvas.width - logoWidth - padding;
-            const y = canvas.height - logoHeight - padding;
+            const x = overlayCanvas.width - logoWidth - padding;
+            const y = overlayCanvas.height - logoHeight - padding;
             
-            // Use exact same drawing code as header logo
             const offsetX = x;
             const offsetY = y + 12;
             
-            ctx.save();
+            overlayCtx.save();
             
             // Globe circle (blue gradient)
-            const gradient = ctx.createRadialGradient(offsetX + 12, offsetY, 3, offsetX + 12, offsetY, 10);
+            const gradient = overlayCtx.createRadialGradient(offsetX + 12, offsetY, 3, offsetX + 12, offsetY, 10);
             gradient.addColorStop(0, '#3B9FFF');
             gradient.addColorStop(1, '#1C6FB8');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(offsetX + 12, offsetY, 10, 0, Math.PI * 2);
-            ctx.fill();
+            overlayCtx.fillStyle = gradient;
+            overlayCtx.beginPath();
+            overlayCtx.arc(offsetX + 12, offsetY, 10, 0, Math.PI * 2);
+            overlayCtx.fill();
             
             // Lens highlight
-            ctx.fillStyle = 'rgba(234, 244, 255, 0.6)';
-            ctx.beginPath();
-            ctx.arc(offsetX + 9, offsetY - 2, 4, 0, Math.PI * 2);
-            ctx.fill();
+            overlayCtx.fillStyle = 'rgba(234, 244, 255, 0.6)';
+            overlayCtx.beginPath();
+            overlayCtx.arc(offsetX + 9, offsetY - 2, 4, 0, Math.PI * 2);
+            overlayCtx.fill();
             
             // Orange arc
-            ctx.strokeStyle = '#FF8C00';
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.arc(offsetX + 12, offsetY, 13, -0.5, 1.5);
-            ctx.stroke();
+            overlayCtx.strokeStyle = '#FF8C00';
+            overlayCtx.lineWidth = 2.5;
+            overlayCtx.lineCap = 'round';
+            overlayCtx.beginPath();
+            overlayCtx.arc(offsetX + 12, offsetY, 13, -0.5, 1.5);
+            overlayCtx.stroke();
             
             // Text "360" in dark blue
-            ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
-            ctx.fillStyle = '#0E2B50';
-            ctx.fillText('360', offsetX + 40, offsetY + 4);
+            overlayCtx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+            overlayCtx.fillStyle = '#0E2B50';
+            overlayCtx.fillText('360', offsetX + 40, offsetY + 4);
             
             // Text "Mate" in gray-blue  
-            ctx.fillStyle = '#1F2F44';
-            ctx.fillText('Mate', offsetX + 68, offsetY + 4);
+            overlayCtx.fillStyle = '#1F2F44';
+            overlayCtx.fillText('Mate', offsetX + 68, offsetY + 4);
             
-            ctx.restore();
+            overlayCtx.restore();
         }
         
         // Draw header logo
@@ -1197,31 +1241,38 @@
         window.addEventListener('DOMContentLoaded', drawHeaderLogo);
 
         function drawHotspot(hotspot) {
-            // Convert spherical coordinates to screen position
-            const aspectRatio = canvas.width / canvas.height;
+            if (!overlayCtx || !camera) return;
             
-            // Calculate relative position from current view
-            let relativeYaw = hotspot.yaw - yaw;
-            let relativePitch = hotspot.pitch - pitch;
+            // Convert hotspot spherical coordinates (yaw/pitch) to 3D position on sphere
+            const phiH = THREE.MathUtils.degToRad(90 - hotspot.pitch);
+            const thetaH = THREE.MathUtils.degToRad(hotspot.yaw);
             
-            // Normalize yaw to -180 to 180 range
-            while (relativeYaw > 180) relativeYaw -= 360;
-            while (relativeYaw < -180) relativeYaw += 360;
+            const vector = new THREE.Vector3(
+                500 * Math.sin(phiH) * Math.cos(thetaH),
+                500 * Math.cos(phiH),
+                500 * Math.sin(phiH) * Math.sin(thetaH)
+            );
             
-            // Check if hotspot is in current field of view
-            const halfFovH = (fov * aspectRatio) / 2;
-            const halfFovV = fov / 2;
+            // Project 3D position to screen coordinates
+            vector.project(camera);
             
-            if (Math.abs(relativeYaw) > halfFovH || Math.abs(relativePitch) > halfFovV) {
-                // Hotspot is outside current view
+            // Check if hotspot is behind camera
+            if (vector.z > 1) {
                 hotspot.screenX = null;
                 hotspot.screenY = null;
                 return;
             }
             
-            // Convert to screen coordinates
-            const x = canvas.width * (0.5 + relativeYaw / (fov * aspectRatio));
-            const y = canvas.height * (0.5 + relativePitch / fov);
+            // Convert to screen space
+            const x = (vector.x * 0.5 + 0.5) * overlayCanvas.width;
+            const y = (vector.y * -0.5 + 0.5) * overlayCanvas.height;
+            
+            // Check if on screen
+            if (x < -50 || x > overlayCanvas.width + 50 || y < -50 || y > overlayCanvas.height + 50) {
+                hotspot.screenX = null;
+                hotspot.screenY = null;
+                return;
+            }
             
             // Store screen position for click detection
             hotspot.screenX = x;
@@ -1233,37 +1284,37 @@
             const pulseSize = Math.sin(Date.now() / 500) * 3;
             
             // Outer glow
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(x, y, radius + pulseSize + 5, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
-            ctx.fill();
+            overlayCtx.save();
+            overlayCtx.beginPath();
+            overlayCtx.arc(x, y, radius + pulseSize + 5, 0, Math.PI * 2);
+            overlayCtx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+            overlayCtx.fill();
             
             // Main circle
-            ctx.beginPath();
-            ctx.arc(x, y, radius + pulseSize, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
-            ctx.fill();
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+            overlayCtx.beginPath();
+            overlayCtx.arc(x, y, radius + pulseSize, 0, Math.PI * 2);
+            overlayCtx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+            overlayCtx.fill();
+            overlayCtx.strokeStyle = 'white';
+            overlayCtx.lineWidth = 3;
+            overlayCtx.stroke();
             
             // Icon
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 24px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            overlayCtx.fillStyle = 'white';
+            overlayCtx.font = 'bold 24px Arial';
+            overlayCtx.textAlign = 'center';
+            overlayCtx.textBaseline = 'middle';
             const icon = hotspot.type === 'navigation' ? '🚪' : 
                          hotspot.type === 'info' ? 'ℹ️' : 
                          hotspot.type === 'media' ? '🖼️' : '🔗';
-            ctx.fillText(icon, x, y);
+            overlayCtx.fillText(icon, x, y);
             
             // Draw tooltip if hovering
             if (hoveredHotspot === hotspot) {
                 drawTooltip(hotspot, x, y);
             }
             
-            ctx.restore();
+            overlayCtx.restore();
         }
 
         function drawTooltip(hotspot, x, y) {
@@ -1280,8 +1331,8 @@
             }
             
             // Measure text
-            ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            const metrics = ctx.measureText(text);
+            overlayCtx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            const metrics = overlayCtx.measureText(text);
             const padding = 12;
             const tooltipWidth = metrics.width + padding * 2;
             const tooltipHeight = 32;
@@ -1292,35 +1343,35 @@
             
             // Keep tooltip on screen
             if (tooltipX < 10) tooltipX = 10;
-            if (tooltipX + tooltipWidth > canvas.width - 10) tooltipX = canvas.width - tooltipWidth - 10;
+            if (tooltipX + tooltipWidth > overlayCanvas.width - 10) tooltipX = canvas.width - tooltipWidth - 10;
             if (tooltipY < 10) tooltipY = y + 40;
             
             // Draw tooltip background
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = 1;
+            overlayCtx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            overlayCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            overlayCtx.lineWidth = 1;
             
             // Rounded rectangle
             const radius = 6;
-            ctx.beginPath();
-            ctx.moveTo(tooltipX + radius, tooltipY);
-            ctx.lineTo(tooltipX + tooltipWidth - radius, tooltipY);
-            ctx.quadraticCurveTo(tooltipX + tooltipWidth, tooltipY, tooltipX + tooltipWidth, tooltipY + radius);
-            ctx.lineTo(tooltipX + tooltipWidth, tooltipY + tooltipHeight - radius);
-            ctx.quadraticCurveTo(tooltipX + tooltipWidth, tooltipY + tooltipHeight, tooltipX + tooltipWidth - radius, tooltipY + tooltipHeight);
-            ctx.lineTo(tooltipX + radius, tooltipY + tooltipHeight);
-            ctx.quadraticCurveTo(tooltipX, tooltipY + tooltipHeight, tooltipX, tooltipY + tooltipHeight - radius);
-            ctx.lineTo(tooltipX, tooltipY + radius);
-            ctx.quadraticCurveTo(tooltipX, tooltipY, tooltipX + radius, tooltipY);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            overlayCtx.beginPath();
+            overlayCtx.moveTo(tooltipX + radius, tooltipY);
+            overlayCtx.lineTo(tooltipX + tooltipWidth - radius, tooltipY);
+            overlayCtx.quadraticCurveTo(tooltipX + tooltipWidth, tooltipY, tooltipX + tooltipWidth, tooltipY + radius);
+            overlayCtx.lineTo(tooltipX + tooltipWidth, tooltipY + tooltipHeight - radius);
+            overlayCtx.quadraticCurveTo(tooltipX + tooltipWidth, tooltipY + tooltipHeight, tooltipX + tooltipWidth - radius, tooltipY + tooltipHeight);
+            overlayCtx.lineTo(tooltipX + radius, tooltipY + tooltipHeight);
+            overlayCtx.quadraticCurveTo(tooltipX, tooltipY + tooltipHeight, tooltipX, tooltipY + tooltipHeight - radius);
+            overlayCtx.lineTo(tooltipX, tooltipY + radius);
+            overlayCtx.quadraticCurveTo(tooltipX, tooltipY, tooltipX + radius, tooltipY);
+            overlayCtx.closePath();
+            overlayCtx.fill();
+            overlayCtx.stroke();
             
             // Draw text
-            ctx.fillStyle = '#e2e8f0';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2);
+            overlayCtx.fillStyle = '#e2e8f0';
+            overlayCtx.textAlign = 'center';
+            overlayCtx.textBaseline = 'middle';
+            overlayCtx.fillText(text, tooltipX + tooltipWidth / 2, tooltipY + tooltipHeight / 2);
             
             // Draw arrow pointing to hotspot
             if (tooltipY < y) {
@@ -1368,9 +1419,17 @@
             if (index >= 0 && index < scenes.length) {
                 currentSceneIndex = index;
                 currentImage = scenes[index].image;
+                
+                // Apply image as texture to the sphere
+                if (currentImage) {
+                    const texture = new THREE.Texture(currentImage);
+                    texture.needsUpdate = true;
+                    sphere.material.map = texture;
+                    sphere.material.needsUpdate = true;
+                }
+                
                 document.getElementById('sceneName').value = scenes[index].name;
                 document.getElementById('sceneDesc').value = scenes[index].description || '';
-                render();
                 updateActiveScene();
             }
         }
@@ -1429,13 +1488,8 @@
             document.getElementById(`${mode}-mode`).classList.add('active');
             
             if (mode === 'builder' && scenes.length > 0) {
-                setTimeout(() => {
-                    canvas = document.getElementById('panoramaCanvas');
-                    ctx = canvas.getContext('2d');
-                    resizeCanvas();
-                    setupCanvasEvents();
-                    render();
-                }, 100);
+                // Builder mode is ready
+                // Three.js is already initialized
             }
         }
 
@@ -1449,10 +1503,13 @@
             selectedHotspotType = type;
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            canvas.style.cursor = 'crosshair';
+            if (renderer && renderer.domElement) {
+                renderer.domElement.style.cursor = 'crosshair';
+            }
         }
 
         function handleCanvasClick(e) {
+            const canvas = renderer.domElement;
             const rect = canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const clickY = e.clientY - rect.top;
@@ -1476,40 +1533,52 @@
             // If placing new hotspot
             if (!selectedHotspotType) return;
             
-            // Convert screen position to spherical coordinates
-            const normalizedX = clickX / canvas.width;
-            const normalizedY = clickY / canvas.height;
+            // Use raycasting to find the point on the sphere where user clicked
+            const mouse = new THREE.Vector2();
+            mouse.x = (clickX / canvas.width) * 2 - 1;
+            mouse.y = -(clickY / canvas.height) * 2 + 1;
             
-            // Calculate the yaw and pitch at click position relative to current view
-            const clickYaw = yaw + (normalizedX - 0.5) * fov * (canvas.width / canvas.height);
-            const clickPitch = pitch + (normalizedY - 0.5) * fov;
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
             
-            const hotspot = {
-                type: selectedHotspotType,
-                yaw: clickYaw,
-                pitch: clickPitch,
-                label: `${selectedHotspotType} hotspot`,
-                targetScene: null,
-                infoText: '',
-                infoTitle: '',
-                linkUrl: '',
-                linkTitle: ''
-            };
+            const intersects = raycaster.intersectObject(sphere);
             
-            if (!scenes[currentSceneIndex].hotspots) {
-                scenes[currentSceneIndex].hotspots = [];
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                
+                // Convert 3D point to spherical coordinates (yaw/pitch)
+                const radius = Math.sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+                const clickPitch = 90 - THREE.MathUtils.radToDeg(Math.acos(point.y / radius));
+                const clickYaw = THREE.MathUtils.radToDeg(Math.atan2(point.z, point.x));
+                
+                const hotspot = {
+                    type: selectedHotspotType,
+                    yaw: clickYaw,
+                    pitch: clickPitch,
+                    label: `${selectedHotspotType} hotspot`,
+                    targetScene: null,
+                    infoText: '',
+                    infoTitle: '',
+                    linkUrl: '',
+                    linkTitle: ''
+                };
+                
+                if (!scenes[currentSceneIndex].hotspots) {
+                    scenes[currentSceneIndex].hotspots = [];
+                }
+                scenes[currentSceneIndex].hotspots.push(hotspot);
+                
+                // Open config modal
+                openHotspotConfig(scenes[currentSceneIndex].hotspots.length - 1);
+                
+                selectedHotspotType = null;
+                if (renderer && renderer.domElement) {
+                    renderer.domElement.style.cursor = 'grab';
+                }
+                document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+                
+                updateScenesDisplay();
             }
-            scenes[currentSceneIndex].hotspots.push(hotspot);
-            
-            // Open config modal
-            openHotspotConfig(scenes[currentSceneIndex].hotspots.length - 1);
-            
-            selectedHotspotType = null;
-            canvas.style.cursor = 'grab';
-            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-            
-            updateScenesDisplay();
-            render();
         }
 
         function handleHotspotClick(hotspot, index) {
@@ -1679,7 +1748,6 @@
             if (gyroscopeEnabled && event.alpha !== null) {
                 yaw = event.alpha;
                 pitch = event.beta - 90;
-                render();
             }
         }
 
@@ -1779,7 +1847,6 @@
             }
             
             document.getElementById('hotspotConfigModal').classList.remove('active');
-            render();
         }
 
         function deleteCurrentHotspot() {
@@ -1787,21 +1854,13 @@
                 scenes[currentSceneIndex].hotspots.splice(currentHotspotIndex, 1);
                 document.getElementById('hotspotConfigModal').classList.remove('active');
                 updateScenesDisplay();
-                render();
             }
-        }
-
-        // Animation loop for pulsing hotspots
-        function animate() {
-            render();
-            requestAnimationFrame(animate);
         }
 
         let currentHotspotIndex = null;
 
         window.addEventListener('load', () => {
             init();
-            animate();
         });
     </script>
 </body>
